@@ -4,7 +4,6 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Cancer Expense Tracker</title>
-    <!-- Load Tailwind CSS -->
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
@@ -48,15 +47,12 @@
             <p id="user-id-display" class="text-xs text-gray-400 mt-2">User ID: Loading...</p>
         </header>
 
-        <!-- Summary Cards -->
         <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mb-8">
-            <!-- Medical Summary -->
             <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-blue-500">
                 <h2 class="text-xl font-semibold text-blue-800 mb-2">Total Medical Expenses</h2>
                 <p id="medical-total" class="text-3xl font-extrabold text-blue-600">$0.00</p>
                 <p class="text-sm text-gray-500 mt-1">Co-pays, prescriptions, treatment costs.</p>
             </div>
-            <!-- Non-Medical Summary -->
             <div class="bg-white p-6 rounded-xl shadow-lg border-t-4 border-green-500">
                 <h2 class="text-xl font-semibold text-green-800 mb-2">Total Related Expenses</h2>
                 <p id="non-medical-total" class="text-3xl font-extrabold text-green-600">$0.00</p>
@@ -64,13 +60,11 @@
             </div>
         </div>
 
-        <!-- Add Expense Form & List -->
         <div class="bg-white p-6 rounded-xl shadow-2xl">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Add New Expense</h2>
 
             <form id="expense-form" class="space-y-4">
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Type and Amount -->
                     <div>
                         <label for="type" class="block text-sm font-medium text-gray-700">Expense Type</label>
                         <select id="type" required class="mt-1 block w-full rounded-lg form-input p-2 text-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150">
@@ -84,7 +78,6 @@
                     </div>
                 </div>
 
-                <!-- Description and Date -->
                 <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div>
                         <label for="description" class="block text-sm font-medium text-gray-700">Description</label>
@@ -96,12 +89,10 @@
                     </div>
                 </div>
 
-                <!-- Category -->
                 <div>
                     <label for="category" class="block text-sm font-medium text-gray-700">Category</label>
                     <select id="category" required class="mt-1 block w-full rounded-lg form-input p-2 text-sm focus:ring-blue-500 focus:border-blue-500 transition duration-150">
-                        <!-- Options populated by JS -->
-                    </select>
+                        </select>
                 </div>
 
                 <button type="submit" id="submit-btn" class="w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-600 hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
@@ -110,8 +101,28 @@
                 <div id="message-box" class="hidden text-center p-2 rounded-lg text-sm"></div>
             </form>
         </div>
+        
+        <div class="bg-white p-6 rounded-xl shadow-2xl mt-8">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Save Your Data Permanently</h2>
+            <p class="text-sm text-gray-600 mb-4">Protect your expense history and access it from any device by creating a permanent account. Your existing data is instantly linked to this new login.</p>
 
-        <!-- Expense List -->
+            <form id="upgrade-form" class="space-y-4">
+                <div>
+                    <label for="upgrade-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                    <input type="email" id="upgrade-email" required placeholder="name@example.com" class="mt-1 block w-full rounded-lg form-input p-2 text-sm focus:ring-green-500 focus:border-green-500 transition duration-150">
+                </div>
+                <div>
+                    <label for="upgrade-password" class="block text-sm font-medium text-gray-700">Choose a Password (min 6 characters)</label>
+                    <input type="password" id="upgrade-password" required minlength="6" class="mt-1 block w-full rounded-lg form-input p-2 text-sm focus:ring-green-500 focus:border-green-500 transition duration-150">
+                </div>
+
+                <button type="submit" id="upgrade-btn" class="w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-green-600 hover:bg-green-700 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition duration-150 ease-in-out">
+                    Create Permanent Account & Save Data
+                </button>
+                <div id="upgrade-message-box" class="hidden text-center p-2 rounded-lg text-sm"></div>
+            </form>
+        </div>
+
         <div class="mt-8 bg-white p-6 rounded-xl shadow-2xl">
             <div class="flex justify-between items-center mb-4 border-b pb-2">
                 <h2 class="text-2xl font-semibold text-gray-800">All Recorded Expenses</h2>
@@ -123,18 +134,17 @@
             
             <div id="expense-list-container" class="scrollable-list">
                 <ul id="expense-list" class="divide-y divide-gray-200">
-                    <!-- Expenses will be inserted here -->
-                </ul>
+                    </ul>
             </div>
             
             <p id="no-expenses" class="text-center text-gray-500 p-4 hidden">No expenses recorded yet. Use the form above to add your first one!</p>
         </div>
     </div>
 
-    <!-- Firebase SDK Imports -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // UPDATED: Added EmailAuthProvider and linkWithCredential
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, EmailAuthProvider, linkWithCredential } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, doc, deleteDoc, updateDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global Firebase Variables
@@ -189,6 +199,13 @@ const initialAuthToken = null; // No initial token needed for public deployment
         const messageBox = document.getElementById('message-box');
         const userIdDisplay = document.getElementById('user-id-display');
         const exportBtn = document.getElementById('export-csv-btn');
+        
+        // New DOM elements for account upgrade
+        const upgradeForm = document.getElementById('upgrade-form');
+        const upgradeEmail = document.getElementById('upgrade-email');
+        const upgradePassword = document.getElementById('upgrade-password');
+        const upgradeMessageBox = document.getElementById('upgrade-message-box');
+
 
         // --- Utility Functions ---
 
@@ -200,6 +217,16 @@ const initialAuthToken = null; // No initial token needed for public deployment
             setTimeout(() => {
                 messageBox.classList.add('hidden');
             }, 3000);
+        }
+        
+        // Display a temporary message for the upgrade section
+        function showUpgradeMessage(message, isError = false) {
+            upgradeMessageBox.textContent = message;
+            upgradeMessageBox.className = `p-2 rounded-lg text-sm mt-2 ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+            upgradeMessageBox.classList.remove('hidden');
+            setTimeout(() => {
+                upgradeMessageBox.classList.add('hidden');
+            }, 5000); // Keep message longer for account changes
         }
 
         // Format number to currency
@@ -437,6 +464,56 @@ const initialAuthToken = null; // No initial token needed for public deployment
                 showMessage("Error loading data. Check console.", true);
             });
         }
+        
+        // --- NEW: Account Upgrade Logic ---
+        async function upgradeToPermanentAccount(e) {
+            e.preventDefault();
+
+            const email = upgradeEmail.value;
+            const password = upgradePassword.value;
+            const user = auth.currentUser;
+
+            // Check if user is currently anonymous (the data loss case we're solving)
+            if (!user || !user.isAnonymous) {
+                showUpgradeMessage("You are already signed in or an error occurred. Please refresh.", true);
+                return;
+            }
+
+            // 1. Get the credentials for the new permanent account
+            const credential = EmailAuthProvider.credential(email, password);
+
+            try {
+                // 2. Link the new credential to the current anonymous user
+                const userCredential = await linkWithCredential(user, credential);
+                
+                // Success: The anonymous user is now a permanent Email/Password user with the SAME UID.
+                showUpgradeMessage("Success! Your account is now permanent and your data is saved!", false);
+                
+                // Update the user display to reflect the permanent status
+                const updatedUser = userCredential.user;
+                userIdDisplay.textContent = `User ID: ${updatedUser.uid} (Permanent Account)`;
+                upgradeForm.classList.add('hidden'); // Hide the form on success
+
+            } catch (error) {
+                console.error("Error upgrading account:", error);
+                
+                let errorMessage = "Failed to create a permanent account. Please try again.";
+                
+                // Handle common errors from linking
+                if (error.code === 'auth/email-already-in-use') {
+                    // This error means another *unrelated* permanent account exists with this email.
+                    errorMessage = "This email is already in use by a different account. Please use a different email to save your current data, or sign in to your existing account.";
+                } else if (error.code === 'auth/weak-password') {
+                    errorMessage = "Password is too weak. Please choose a password of at least 6 characters.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "The email address is invalid.";
+                }
+                
+                showUpgradeMessage(errorMessage, true);
+            }
+        }
+        // --- END NEW LOGIC ---
+
 
         // --- Initialization ---
 
@@ -458,6 +535,7 @@ const initialAuthToken = null; // No initial token needed for public deployment
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
+                    // This will reuse an existing anonymous session if it exists in local storage
                     await signInAnonymously(auth);
                 }
             } catch (error) {
@@ -470,8 +548,15 @@ const initialAuthToken = null; // No initial token needed for public deployment
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     userId = user.uid;
-                    userIdDisplay.textContent = `User ID: ${userId}`;
-                    console.log("Authenticated with UID:", userId);
+                    // Check if the user is anonymous to update the display
+                    const status = user.isAnonymous ? '(Guest Session)' : '(Permanent Account)';
+                    userIdDisplay.textContent = `User ID: ${userId} ${status}`;
+                    console.log("Authenticated with UID:", userId, status);
+                    
+                    // Hide the upgrade form if the user is already permanent
+                    if (!user.isAnonymous) {
+                         upgradeForm.classList.add('hidden');
+                    }
                     
                     // 4. Start listening for data
                     listenForExpenses();
@@ -481,8 +566,9 @@ const initialAuthToken = null; // No initial token needed for public deployment
                     appContainer.classList.remove('hidden');
 
                 } else {
-                    userId = crypto.randomUUID(); // Fallback identifier if sign-in fails, though it won't persist data correctly per security rules.
-                    userIdDisplay.textContent = `User ID: ${userId} (Unauthenticated)`;
+                    // Fallback should not be hit if signInAnonymously is used correctly
+                    userId = null; 
+                    userIdDisplay.textContent = `User ID: No active session`;
                     loadingScreen.innerHTML = '<p class="text-red-600">ERROR: Could not confirm user authentication state.</p>';
                     console.error("User is not authenticated.");
                 }
@@ -491,8 +577,11 @@ const initialAuthToken = null; // No initial token needed for public deployment
 
         // --- Event Listeners ---
         
-        // Form submission
+        // Form submission for expense
         form.addEventListener('submit', addExpense);
+
+        // Form submission for upgrade (NEW LISTENER)
+        upgradeForm.addEventListener('submit', upgradeToPermanentAccount);
 
         // Change categories when the expense type changes
         typeSelect.addEventListener('change', (e) => {
