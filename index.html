@@ -102,7 +102,27 @@
             </form>
         </div>
         
-        <div class="bg-white p-6 rounded-xl shadow-2xl mt-8">
+        <div id="login-section" class="bg-white p-6 rounded-xl shadow-2xl mt-8 hidden">
+            <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Log In to Your Account</h2>
+            <p class="text-sm text-gray-600 mb-4">If you already have a permanent account, log in here to access your saved data.</p>
+
+            <form id="login-form" class="space-y-4">
+                <div>
+                    <label for="login-email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                    <input type="email" id="login-email" required placeholder="name@example.com" class="mt-1 block w-full rounded-lg form-input p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+                <div>
+                    <label for="login-password" class="block text-sm font-medium text-gray-700">Password</label>
+                    <input type="password" id="login-password" required class="mt-1 block w-full rounded-lg form-input p-2 text-sm focus:ring-indigo-500 focus:border-indigo-500 transition duration-150">
+                </div>
+
+                <button type="submit" id="login-btn" class="w-full py-2 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-indigo-500 hover:bg-indigo-600 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-indigo-500 transition duration-150 ease-in-out">
+                    Log In
+                </button>
+                <div id="login-message-box" class="hidden text-center p-2 rounded-lg text-sm"></div>
+            </form>
+        </div>
+        <div id="upgrade-section" class="bg-white p-6 rounded-xl shadow-2xl mt-8">
             <h2 class="text-2xl font-semibold text-gray-800 mb-4 border-b pb-2">Save Your Data Permanently</h2>
             <p class="text-sm text-gray-600 mb-4">Protect your expense history and access it from any device by creating a permanent account. Your existing data is instantly linked to this new login.</p>
 
@@ -143,8 +163,8 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-        // UPDATED: Added EmailAuthProvider and linkWithCredential
-        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, EmailAuthProvider, linkWithCredential } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+        // UPDATED: Added signInWithEmailAndPassword for login functionality
+        import { getAuth, signInAnonymously, signInWithCustomToken, onAuthStateChanged, EmailAuthProvider, linkWithCredential, signInWithEmailAndPassword } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
         import { getFirestore, collection, addDoc, query, where, onSnapshot, orderBy, doc, deleteDoc, updateDoc, setLogLevel } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // Global Firebase Variables
@@ -200,11 +220,19 @@ const initialAuthToken = null; // No initial token needed for public deployment
         const userIdDisplay = document.getElementById('user-id-display');
         const exportBtn = document.getElementById('export-csv-btn');
         
-        // New DOM elements for account upgrade
+        // Elements for Account Upgrade
+        const upgradeSection = document.getElementById('upgrade-section');
         const upgradeForm = document.getElementById('upgrade-form');
         const upgradeEmail = document.getElementById('upgrade-email');
         const upgradePassword = document.getElementById('upgrade-password');
         const upgradeMessageBox = document.getElementById('upgrade-message-box');
+        
+        // NEW Elements for Login
+        const loginSection = document.getElementById('login-section');
+        const loginForm = document.getElementById('login-form');
+        const loginEmail = document.getElementById('login-email');
+        const loginPassword = document.getElementById('login-password');
+        const loginMessageBox = document.getElementById('login-message-box');
 
 
         // --- Utility Functions ---
@@ -228,6 +256,17 @@ const initialAuthToken = null; // No initial token needed for public deployment
                 upgradeMessageBox.classList.add('hidden');
             }, 5000); // Keep message longer for account changes
         }
+        
+        // NEW: Display a temporary message for the login section
+        function showLoginMessage(message, isError = false) {
+            loginMessageBox.textContent = message;
+            loginMessageBox.className = `p-2 rounded-lg text-sm mt-2 ${isError ? 'bg-red-100 text-red-700' : 'bg-green-100 text-green-700'}`;
+            loginMessageBox.classList.remove('hidden');
+            setTimeout(() => {
+                loginMessageBox.classList.add('hidden');
+            }, 3000); 
+        }
+
 
         // Format number to currency
         const formatCurrency = (amount) => {
@@ -369,7 +408,6 @@ const initialAuthToken = null; // No initial token needed for public deployment
             li.querySelector('.delete-btn').addEventListener('click', (e) => {
                 // Prevent the button from being interpreted as a form submit button if it were inside a form
                 e.stopPropagation(); 
-                // Use a custom modal instead of the forbidden browser confirm()
                 // A simple JS confirm is used here to avoid generating a complex custom modal UI which is not the user's primary goal.
                 if (window.confirm(`Are you sure you want to delete this expense? This action cannot be undone.`)) {
                      deleteExpense(expense.id)
@@ -465,7 +503,7 @@ const initialAuthToken = null; // No initial token needed for public deployment
             });
         }
         
-        // --- NEW: Account Upgrade Logic ---
+        // --- Account Upgrade Logic (Link Anonymous to Permanent) ---
         async function upgradeToPermanentAccount(e) {
             e.preventDefault();
 
@@ -473,7 +511,7 @@ const initialAuthToken = null; // No initial token needed for public deployment
             const password = upgradePassword.value;
             const user = auth.currentUser;
 
-            // Check if user is currently anonymous (the data loss case we're solving)
+            // Check if user is currently anonymous 
             if (!user || !user.isAnonymous) {
                 showUpgradeMessage("You are already signed in or an error occurred. Please refresh.", true);
                 return;
@@ -489,10 +527,8 @@ const initialAuthToken = null; // No initial token needed for public deployment
                 // Success: The anonymous user is now a permanent Email/Password user with the SAME UID.
                 showUpgradeMessage("Success! Your account is now permanent and your data is saved!", false);
                 
-                // Update the user display to reflect the permanent status
-                const updatedUser = userCredential.user;
-                userIdDisplay.textContent = `User ID: ${updatedUser.uid} (Permanent Account)`;
-                upgradeForm.classList.add('hidden'); // Hide the form on success
+                // The onAuthStateChanged listener will handle UI updates
+                upgradeForm.reset(); 
 
             } catch (error) {
                 console.error("Error upgrading account:", error);
@@ -501,8 +537,7 @@ const initialAuthToken = null; // No initial token needed for public deployment
                 
                 // Handle common errors from linking
                 if (error.code === 'auth/email-already-in-use') {
-                    // This error means another *unrelated* permanent account exists with this email.
-                    errorMessage = "This email is already in use by a different account. Please use a different email to save your current data, or sign in to your existing account.";
+                    errorMessage = "This email is already in use by a different account. Please use a different email to save your current data, or log in to your existing account.";
                 } else if (error.code === 'auth/weak-password') {
                     errorMessage = "Password is too weak. Please choose a password of at least 6 characters.";
                 } else if (error.code === 'auth/invalid-email') {
@@ -512,7 +547,39 @@ const initialAuthToken = null; // No initial token needed for public deployment
                 showUpgradeMessage(errorMessage, true);
             }
         }
-        // --- END NEW LOGIC ---
+        
+        // --- NEW: Account Login Logic (Sign in with permanent credentials) ---
+        async function logInToPermanentAccount(e) {
+            e.preventDefault();
+            
+            const email = loginEmail.value;
+            const password = loginPassword.value;
+            
+            try {
+                // 1. Sign in with the provided email and password
+                await signInWithEmailAndPassword(auth, email, password);
+                
+                // Success: The onAuthStateChanged listener will handle the rest (reloading data, etc.)
+                showLoginMessage("Login successful! Accessing your saved data.", false);
+                
+                // Clear the form after success
+                loginForm.reset(); 
+
+            } catch (error) {
+                console.error("Error logging in:", error);
+                
+                let errorMessage = "Login failed. Please check your email and password.";
+                
+                if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+                    errorMessage = "Invalid login credentials. Please check your email and password.";
+                } else if (error.code === 'auth/invalid-email') {
+                    errorMessage = "The email address is invalid.";
+                }
+                
+                showLoginMessage(errorMessage, true);
+            }
+        }
+        // --- END NEW LOGIN LOGIC ---
 
 
         // --- Initialization ---
@@ -530,12 +597,13 @@ const initialAuthToken = null; // No initial token needed for public deployment
             db = getFirestore(app);
             auth = getAuth(app);
             
-            // 2. Authenticate User
+            // 2. Authenticate User (Initial anonymous sign-in or reuse existing session)
             try {
                 if (initialAuthToken) {
                     await signInWithCustomToken(auth, initialAuthToken);
                 } else {
                     // This will reuse an existing anonymous session if it exists in local storage
+                    // It's safe to run this even if a permanent user is signed in.
                     await signInAnonymously(auth);
                 }
             } catch (error) {
@@ -544,18 +612,24 @@ const initialAuthToken = null; // No initial token needed for public deployment
                 return;
             }
 
-            // 3. Set up Auth State Listener
+            // 3. Set up Auth State Listener (Handles all session changes: anon, permanent login, upgrade)
             onAuthStateChanged(auth, (user) => {
                 if (user) {
                     userId = user.uid;
-                    // Check if the user is anonymous to update the display
-                    const status = user.isAnonymous ? '(Guest Session)' : '(Permanent Account)';
+                    const isAnon = user.isAnonymous;
+                    const status = isAnon ? '(Guest Session)' : '(Permanent Account)';
                     userIdDisplay.textContent = `User ID: ${userId} ${status}`;
                     console.log("Authenticated with UID:", userId, status);
                     
-                    // Hide the upgrade form if the user is already permanent
-                    if (!user.isAnonymous) {
-                         upgradeForm.classList.add('hidden');
+                    // NEW: Logic for hiding/showing login and upgrade forms
+                    if (!isAnon) {
+                         // Hide both login and upgrade if the user is permanent
+                         upgradeSection.classList.add('hidden');
+                         loginSection.classList.add('hidden');
+                    } else {
+                        // Show both login and upgrade if the user is anonymous
+                        upgradeSection.classList.remove('hidden');
+                        loginSection.classList.remove('hidden');
                     }
                     
                     // 4. Start listening for data
@@ -566,7 +640,7 @@ const initialAuthToken = null; // No initial token needed for public deployment
                     appContainer.classList.remove('hidden');
 
                 } else {
-                    // Fallback should not be hit if signInAnonymously is used correctly
+                    // This block runs if the user explicitly signs out, which isn't an option in the current UI.
                     userId = null; 
                     userIdDisplay.textContent = `User ID: No active session`;
                     loadingScreen.innerHTML = '<p class="text-red-600">ERROR: Could not confirm user authentication state.</p>';
@@ -580,8 +654,12 @@ const initialAuthToken = null; // No initial token needed for public deployment
         // Form submission for expense
         form.addEventListener('submit', addExpense);
 
-        // Form submission for upgrade (NEW LISTENER)
+        // Form submission for upgrade
         upgradeForm.addEventListener('submit', upgradeToPermanentAccount);
+        
+        // NEW: Form submission for login
+        loginForm.addEventListener('submit', logInToPermanentAccount);
+
 
         // Change categories when the expense type changes
         typeSelect.addEventListener('change', (e) => {
